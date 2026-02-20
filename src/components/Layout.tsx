@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { isSuperior } from "@/lib/roles";
 import { Shield, Users, AlertTriangle, ScrollText, LogOut, Star, Radio, Home } from "lucide-react";
-import emblem from "@/assets/psp-logo.png";
+import emblem from "@/assets/psp-emblem.png";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { currentUser, logout } = useAuth();
