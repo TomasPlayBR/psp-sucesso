@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Lock, User, AlertCircle } from "lucide-react";
-import emblem from "@/assets/psp-emblem.png";
+import emblem from "@/assets/psp-logo.png";
 
 export default function Login() {
   const { login } = useAuth();
