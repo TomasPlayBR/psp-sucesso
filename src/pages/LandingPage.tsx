@@ -262,10 +262,15 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-14 max-w-lg mx-auto">
+          <div className="flex flex-row justify-center items-center gap-12 sm:gap-24 max-w-lg mx-auto border-t border-white/5 pt-10 mt-12">
             {STATS.map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <div className="text-lg font-bold" style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--gold))" }}>
+              <div key={label} className="flex flex-col items-center">
+                <div className="text-2xl sm:text-3xl font-bold tracking-tight"
+                  style={{
+                    fontFamily: "Rajdhani, sans-serif",
+                    color: "hsl(var(--gold))",
+                    textShadow: "0 0 20px hsl(var(--gold) / 0.3)"
+                  }}>
                   {value}
                 </div>
                 <div className="text-[10px] uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>
