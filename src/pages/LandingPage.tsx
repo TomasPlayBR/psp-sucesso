@@ -1,7 +1,7 @@
 import { Shield, Users, AlertTriangle, Radio, ChevronRight, ExternalLink, Megaphone, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import emblem from "@/assets/psp-emblem.png";
+import emblem from "@/assets/psp-logo.png";
 
 const POSTS = [
   {
