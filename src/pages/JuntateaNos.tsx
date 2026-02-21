@@ -1,5 +1,5 @@
 import { Shield, CheckCircle, ExternalLink } from "lucide-react";
-import emblem from "@/assets/psp-emblem.png";
+import emblem from "@/assets/psp-logo.png";
 
 const REQUISITOS = [
   "Ter idade superior a 15 anos",
