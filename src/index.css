@@ -1,1 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 30% 7%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 28% 10%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 220 28% 10%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 43 90% 52%;
+    --primary-foreground: 220 30% 7%;
+
+    --secondary: 220 25% 14%;
+    --secondary-foreground: 210 20% 85%;
+
+    --muted: 220 25% 14%;
+    --muted-foreground: 215 15% 50%;
+
+    --accent: 43 80% 45%;
+    --accent-foreground: 220 30% 7%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 43 90% 52%;
+
+    --radius: 0.375rem;
+
+    /* Custom PSP tokens */
+    --navy: 220 40% 12%;
+    --navy-light: 220 35% 17%;
+    --gold: 43 90% 52%;
+    --gold-dim: 43 60% 35%;
+    --surface: 220 28% 10%;
+    --surface-raised: 220 25% 13%;
+    --danger: 0 70% 50%;
+    --success: 145 60% 40%;
+    --sidebar-background: 220 35% 8%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-primary: 43 90% 52%;
+    --sidebar-primary-foreground: 220 30% 7%;
+    --sidebar-accent: 220 30% 14%;
+    --sidebar-accent-foreground: 210 20% 85%;
+    --sidebar-border: 220 25% 14%;
+    --sidebar-ring: 43 90% 52%;
+
+    --gradient-navy: linear-gradient(135deg, hsl(220 40% 8%), hsl(220 35% 14%));
+    --gradient-gold: linear-gradient(135deg, hsl(43 90% 52%), hsl(38 85% 42%));
+    --gradient-surface: linear-gradient(180deg, hsl(220 28% 11%), hsl(220 28% 9%));
+    --shadow-gold: 0 0 20px hsl(43 90% 52% / 0.25);
+    --shadow-card: 0 4px 24px hsl(220 40% 4% / 0.6);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer components {
+  .psp-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+  }
+
+  .psp-header {
+    background: linear-gradient(180deg, hsl(var(--navy)) 0%, hsl(220 40% 9%) 100%);
+    border-bottom: 1px solid hsl(var(--gold) / 0.3);
+  }
+
+  .gold-line {
+    height: 2px;
+    background: var(--gradient-gold);
+    border-radius: 1px;
+  }
+
+  .rank-badge {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: hsl(var(--gold) / 0.12);
+    color: hsl(var(--gold));
+    border: 1px solid hsl(var(--gold) / 0.3);
+  }
+
+  .rank-badge-high {
+    background: hsl(var(--gold) / 0.2);
+    color: hsl(var(--gold));
+    border-color: hsl(var(--gold) / 0.5);
+  }
+
+  .danger-badge {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .nav-item {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+  }
+
+  .nav-item:hover {
+    color: hsl(var(--gold));
+  }
+
+  .nav-item.active {
+    color: hsl(var(--gold));
+    border-bottom: 2px solid hsl(var(--gold));
+  }
+
+  .table-row-hover:hover {
+    background: hsl(var(--gold) / 0.05);
+  }
+
+  .psp-input {
+    background: hsl(var(--input));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  .psp-input:focus {
+    border-color: hsl(var(--gold) / 0.6);
+    box-shadow: 0 0 0 2px hsl(var(--gold) / 0.1);
+  }
+
+  .btn-gold {
+    background: var(--gradient-gold);
+    color: hsl(var(--primary-foreground));
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.875rem;
+  }
+
+  .btn-gold:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-gold);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.8rem;
+  }
+
+  .btn-ghost:hover {
+    background: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+  }
+
+  .btn-danger {
+    background: hsl(var(--destructive) / 0.15);
+    color: hsl(var(--destructive));
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--destructive) / 0.3);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.75rem;
+  }
+
+  .btn-danger:hover {
+    background: hsl(var(--destructive) / 0.25);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--gold-dim)); }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 20px hsl(43 90% 52% / 0.15); }
+  50% { box-shadow: 0 0 40px hsl(43 90% 52% / 0.3); }
+}
+
+.landing-emblem-glow {
+  animation: pulse-gold 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.landing-emblem {
+  transition: transform 0.3s ease;
+}
+.landing-emblem:hover {
+  transform: scale(1.1);
+}
