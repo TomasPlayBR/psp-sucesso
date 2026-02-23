@@ -5,13 +5,21 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
+// --- CORREÇÃO DA FUNÇÃO DE CARGOS ---
 function getCareerTier(role: string): "agente" | "chefe" | "oficial" {
-  // Converte para minúsculas para evitar erros de "Agente" vs "agente"
+  if (!role) return "agente";
   const r = role.toLowerCase();
-if (rank >= 35 || r.includes("oficial") || r.includes("comissário")) return "oficial";
-  if (rank >= 25 || r.includes("chefe")) return "chefe";
   
-  // Se não for nenhum dos de cima, é agente (padrão)
+  // Pegamos o valor numérico da hierarquia com fallback para 0
+  const rankValue = ROLE_HIERARCHY[role] ?? 0;
+
+  if (rankValue >= 35 || r.includes("oficial") || r.includes("comissário")) {
+    return "oficial";
+  }
+  if (rankValue >= 25 || r.includes("chefe")) {
+    return "chefe";
+  }
+  
   return "agente";
 }
 
@@ -68,6 +76,12 @@ interface FileAttachment {
 
 export default function Missoes() {
   const { currentUser, registrarLog } = useAuth();
+  
+  // --- SEGURANÇA: SE NÃO HOUVER USER, NÃO RENDERIZA NADA QUE POSSA QUEBRAR ---
+  if (!currentUser) {
+    return <div className="p-10 text-center text-muted-foreground">A carregar perfil...</div>;
+  }
+
   const [currentMission, setCurrentMission] = useState<Mission | null>(null);
   const [companions, setCompanions] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -77,9 +91,9 @@ export default function Missoes() {
   const [spinning, setSpinning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const tier = currentUser ? getCareerTier(currentUser.role) : "agente";
+  const tier = getCareerTier(currentUser.role);
   const tierConfig = TIER_CONFIG[tier];
-  const pool = MISSIONS[tier];
+  const pool = MISSIONS[tier] || MISSIONS.agente;
   const totalXP = history.reduce((sum, h) => sum + h.xp, 0);
 
   const rollMission = () => {
@@ -105,7 +119,7 @@ export default function Missoes() {
     if (!files) return;
     
     Array.from(files).forEach(file => {
-      if (file.size > 5 * 1024 * 1024) return; // 5MB max
+      if (file.size > 5 * 1024 * 1024) return; 
       const reader = new FileReader();
       reader.onload = () => {
         setAttachments(prev => [...prev, {
@@ -150,7 +164,9 @@ export default function Missoes() {
     setCompleting(false);
   };
 
-  useEffect(() => { rollMission(); }, []);
+  useEffect(() => { 
+    if (pool.length > 0) rollMission(); 
+  }, []);
 
   const diffConfig = currentMission ? DIFF_CONFIG[currentMission.difficulty] : null;
 
@@ -202,15 +218,10 @@ export default function Missoes() {
       {/* Active Mission */}
       {currentMission && diffConfig && (
         <div className="relative" style={{ animation: spinning ? "none" : "fadeIn 0.5s ease" }}>
-          {/* Glow effect */}
           <div className="absolute -inset-1 rounded-xl opacity-20 blur-xl" style={{ background: diffConfig.color }} />
-          
           <div className="psp-card relative overflow-hidden rounded-xl">
-            {/* Top accent bar */}
             <div className="h-1" style={{ background: `linear-gradient(90deg, ${diffConfig.color}, transparent)` }} />
-            
             <div className="p-6 sm:p-8 space-y-6">
-              {/* Mission header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
@@ -242,16 +253,13 @@ export default function Missoes() {
                 )}
               </div>
 
-              {/* Description */}
               <div className="p-4 rounded-lg" style={{ background: "hsl(var(--secondary) / 0.5)", borderLeft: `3px solid ${diffConfig.color}` }}>
                 <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
                   {currentMission.description}
                 </p>
               </div>
 
-              {/* Form fields */}
               <div className="grid gap-5 sm:grid-cols-2">
-                {/* Companions */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
                     style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
@@ -268,7 +276,6 @@ export default function Missoes() {
                   />
                 </div>
 
-                {/* File upload */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
                     style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
@@ -300,7 +307,6 @@ export default function Missoes() {
                 </div>
               </div>
 
-              {/* Attachment previews */}
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-3">
                   {attachments.map((att, i) => (
@@ -329,7 +335,6 @@ export default function Missoes() {
                 </div>
               )}
 
-              {/* Complete button */}
               {!completed && (
                 <button onClick={completeMission} disabled={completing || spinning}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-bold uppercase tracking-wider transition-all"
