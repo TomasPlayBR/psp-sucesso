@@ -22,46 +22,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--background))" }}>
-      {/* Top bar */}
       <header className="psp-header">
         <div className="flex items-center justify-between px-6 py-3">
-          {/* Logo */}
           <div className="flex items-center gap-3">
-            <img 
-              src={emblem} 
-              alt="PSP" 
-              className="w-9 h-9 object-cover rounded-full"
-              style={{ border: "1px solid hsl(var(--gold)/0.4)" }} 
-            />
+            <img src={emblem} alt="PSP" className="w-9 h-9 object-cover rounded-full"
+              style={{ border: "1px solid hsl(var(--gold)/0.4)" }} />
             <div>
-              <div 
-                className="text-base font-bold tracking-widest uppercase"
-                style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif", lineHeight: 1 }}
-              >
+              <div className="text-base font-bold tracking-widest uppercase"
+                style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif", lineHeight: 1 }}>
                 PSP Sucesso
               </div>
-              <div 
-                className="text-[10px] tracking-[0.2em] uppercase"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
+              <div className="text-[10px] tracking-[0.2em] uppercase"
+                style={{ color: "hsl(var(--muted-foreground))" }}>
                 Sistema Interno
               </div>
             </div>
           </div>
 
-          {/* User info */}
           {currentUser && (
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                <div 
-                  className="text-sm font-semibold" 
-                  style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--foreground))" }}
-                >
+                <div className="text-sm font-semibold" style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--foreground))" }}>
                   {currentUser.username}
                 </div>
                 <div className="rank-badge">{currentUser.role}</div>
               </div>
-              <button onClick={handleLogout} className="btn-ghost flex items-center gap-1.5 text-xs">
+              <button onClick={handleLogout} className="btn-ghost flex items-center gap-1.5 text-xs text-red-400">
                 <LogOut size={13} />
                 <span className="hidden sm:inline">Sair</span>
               </button>
@@ -69,69 +55,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {/* Nav */}
-        <nav 
-          className="flex items-center gap-1 px-6 pb-0 border-t overflow-x-auto"
-          style={{ borderColor: "hsl(var(--border))" }}
-        >
+        <nav className="flex items-center gap-1 px-6 pb-0 border-t overflow-x-auto"
+          style={{ borderColor: "hsl(var(--border))" }}>
+          
           <NavLink to="/" end className={({ isActive }) =>
             `nav-item flex items-center gap-2 px-3 py-2 rounded transition-all ${
-              isActive ? "text-[hsl(var(--gold))]" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--gold))]"
+              isActive ? "text-gold" : "text-muted-foreground hover:text-gold"
             }`
           }>
-            <Home size={14} />
-            Início
+            <Home size={14} /> Início
           </NavLink>
 
           <NavLink to="/hub" end className={navLinkClass}>
-            <Users size={14} />
-            Hub
+            <Users size={14} /> Hub
           </NavLink>
 
           <NavLink to="/blacklist" className={navLinkClass}>
-            <AlertTriangle size={14} />
-            Blacklist
+            <AlertTriangle size={14} /> Blacklist
           </NavLink>
 
           <NavLink to="/codigos10" className={navLinkClass}>
-            <Radio size={14} />
-            Códigos 10
+            <Radio size={14} /> Códigos 10
           </NavLink>
 
-          {/* Secção para Superiores */}
           {currentUser && isSuperior(currentUser.role) && (
             <>
               <NavLink to="/missoes" className={navLinkClass}>
-                <Target size={14} />
-                Missões
+                <Target size={14} /> Missões
               </NavLink>
-
+              
               <NavLink to="/logs" className={navLinkClass}>
-                <ScrollText size={14} />
-                Logs
+                <ScrollText size={14} /> Logs
               </NavLink>
 
               <NavLink to="/mission-logs" className={navLinkClass}>
-                <ClipboardList size={14} />
-                Logs Missões
+                <ClipboardList size={14} /> Logs Missões
               </NavLink>
 
               <NavLink to="/superiores" className={navLinkClass}>
-                <Star size={14} />
-                Superiores
+                <Star size={14} /> Superiores
               </NavLink>
             </>
           )}
 
-          <NavLink to="/junta-te" className={({ isActive }) =>
-            `nav-item flex items-center gap-2 px-3 py-2 rounded transition-all ${
-              isActive
-                ? "text-[hsl(var(--gold))] bg-[hsl(var(--gold)/0.08)]"
-                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--gold))]"
-            }`
-          }>
-            <Shield size={14} />
-            Junta-te
+          <NavLink to="/junta-te" className={navLinkClass}>
+            <Shield size={14} /> Junta-te
           </NavLink>
         </nav>
       </header>
