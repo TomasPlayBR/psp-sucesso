@@ -89,6 +89,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ScrollText size={14} />
                 Logs
               </NavLink>
+          </NavLink>
+              <NavLink to="/mission-logs" className={navLinkClass}>
+                <ClipboardList size={14} />
+                Logs Missões
               <NavLink to="/superiores" className={navLinkClass}>
                 <Star size={14} />
                 Superiores
