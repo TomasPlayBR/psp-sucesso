@@ -81,6 +81,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </NavLink>
           {currentUser && isSuperior(currentUser.role) && (
             <>
+          <NavLink to="/missoes" className={navLinkClass}>
+            <Target size={14} />
+            Missões
+          </NavLink>
               <NavLink to="/logs" className={navLinkClass}>
                 <ScrollText size={14} />
                 Logs
