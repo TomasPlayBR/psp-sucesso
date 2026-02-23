@@ -69,6 +69,19 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
+     {/* Missões — protegido, todos os autenticados */}
+      <Route path="/missoes" element={
+        <ProtectedRoute>
+          <Layout><Missoes /></Layout>
+        </ProtectedRoute>
+      } />
+      {/* Logs de Missões — só superiores */}
+      <Route path="/mission-logs" element={
+        <ProtectedRoute requireSuperior>
+          <Layout><MissionLogs /></Layout>
+        </ProtectedRoute>
+      } />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
