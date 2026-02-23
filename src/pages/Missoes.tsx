@@ -22,22 +22,18 @@ interface Mission {
 
 const MISSIONS: Record<string, Mission[]> = {
   agente: [
-    { title: "Patrulha Urbana", description: "Realizar uma patrulha completa pela zona urbana principal, reportando qualquer atividade suspeita.", difficulty: "Fácil", icon: <MapPin size={20} />, xp: 50 },
-    { title: "Controlo de Trânsito", description: "Montar operação de controlo de trânsito numa zona de elevado fluxo durante 15 minutos.", difficulty: "Fácil", icon: <Shield size={20} />, xp: 50 },
-    { title: "Escolta de Civil", description: "Escoltar um civil em segurança desde o ponto A ao ponto B sem incidentes.", difficulty: "Média", icon: <Users size={20} />, xp: 100 },
-    { title: "Resposta a 10-50", description: "Responder a um acidente de viação, assegurar a área e elaborar relatório.", difficulty: "Média", icon: <AlertTriangle size={20} />, xp: 100 },
-    { title: "Operação Anti-Droga", description: "Participar numa operação de vigilância e detenção de tráfico de droga.", difficulty: "Difícil", icon: <Crosshair size={20} />, xp: 200 },
-    { title: "Perseguição a Pé", description: "Perseguir e deter um suspeito em fuga a pé pela cidade.", difficulty: "Difícil", icon: <Target size={20} />, xp: 200 },
-    { title: "Ronda Noturna", description: "Executar ronda noturna completa, verificando estabelecimentos e zonas de risco.", difficulty: "Média", icon: <MapPin size={20} />, xp: 100 },
-    { title: "Verificação de Identidade", description: "Abordar e verificar identidade de 3 indivíduos suspeitos na zona comercial.", difficulty: "Fácil", icon: <Shield size={20} />, xp: 50 },
+    { title: "Patrulha LS", description: "Realizar uma patrulha durante 30 minutos pela zona de LS e informar tudo por escrito com a devida prova.", difficulty: "Fácil", icon: <MapPin size={20} />, xp: 50 },
+    { title: "Patrulha LV", description: "Realizar uma patrulha durante 30 minutos pela zona de LV e informar tudo por escrito com a devida prova.", difficulty: "Fácil", icon: <Shield size={20} />, xp: 50 },
+    { title: "Detenção", description: "Realizar uma detenção a um civil e informar tudo por escrito com a devida prova.", difficulty: "Média", icon: <Users size={20} />, xp: 100 },
+    { title: "Realizar 10 abordagens", description: "Realizar 10 abordagens na zona de LS e informar tudo por escrito com a devida prova.", difficulty: "Média", icon: <AlertTriangle size={20} />, xp: 100 },
+    { title: "Trafico de droga", description: "Participar numa operação de trafico de droga e conseguir sobreviver/levar o civil preso e informar tudo por escrito com a devida prova.", difficulty: "Difícil", icon: <Crosshair size={20} />, xp: 200 },
+    { title: "5 Multas", description: "Passar 5 multas", difficulty: "Difícil", icon: <Target size={20} />, xp: 200 },
   ],
   chefe: [
-    { title: "Coordenação de Operação", description: "Coordenar uma equipa de 3+ agentes numa operação de fiscalização.", difficulty: "Média", icon: <Users size={20} />, xp: 150 },
-    { title: "Gestão de Perímetro", description: "Estabelecer e gerir um perímetro de segurança num evento público.", difficulty: "Média", icon: <MapPin size={20} />, xp: 150 },
-    { title: "Operação de Alto Risco", description: "Liderar uma abordagem de alto risco (10-11) com coordenação tática.", difficulty: "Difícil", icon: <AlertTriangle size={20} />, xp: 300 },
-    { title: "Briefing Operacional", description: "Preparar e conduzir briefing para a equipa antes de uma operação especial.", difficulty: "Fácil", icon: <Shield size={20} />, xp: 100 },
-    { title: "Negociação de Crise", description: "Gerir situação de crise com reféns, coordenando equipas e negociação.", difficulty: "Difícil", icon: <Crosshair size={20} />, xp: 300 },
-    { title: "Supervisão de Patrulha", description: "Supervisionar patrulha de agentes, avaliando desempenho e corrigindo procedimentos.", difficulty: "Média", icon: <Target size={20} />, xp: 150 },
+    { title: "Coordenação de Operação", description: "Coordenar uma equipa de 3+ agentes numa patrulha de 30 minutos e informar tudo por escrito com a devida prova.", difficulty: "Média", icon: <Users size={20} />, xp: 150 },
+    { title: "Organizar/liderar uma patrulha", description: "Organizar uma patrulha e as calls do discord einformar tudo por escrito com a devida prova.", difficulty: "Média", icon: <MapPin size={20} />, xp: 150 },
+    { title: "Avaliar agentes", description: "Colocar observações acerca do agente avaliado.", difficulty: "Difícil", icon: <AlertTriangle size={20} />, xp: 300 },
+    { title: "Realizar uma negociação", description: "Realizar uma negociação a uma loja/banco e informar tudo por escrito com a devida prova.", difficulty: "Fácil", icon: <Shield size={20} />, xp: 100 },
   ],
   oficial: [
     { title: "Planeamento Estratégico", description: "Desenvolver plano estratégico para operação de larga escala envolvendo múltiplas unidades.", difficulty: "Difícil", icon: <Target size={20} />, xp: 400 },
