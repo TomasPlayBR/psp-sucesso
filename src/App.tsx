@@ -75,12 +75,13 @@ function AppRoutes() {
           <Layout><Missoes /></Layout>
         </ProtectedRoute>
       } />
-      {/* Logs de Missões — só superiores */}
+
+     {/* Logs de Missões — só superiores */}
       <Route path="/mission-logs" element={
-        <ProtectedRoute requireSuperior>
-          <Layout><MissionLogs /></Layout>
-        </ProtectedRoute>
-      } />
+       <ProtectedRoute requireSuperior>
+         <Layout><MissionLogs /></Layout>
+       </ProtectedRoute>
+     } />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
