@@ -15,6 +15,8 @@ import JuntateaNos from "@/pages/JuntateaNos";
 import Codigos10 from "@/pages/Codigos10";
 import Logs from "@/pages/Logs";
 import Superiores from "@/pages/Superiores";
+import Missoes from "@/pages/Missoes";
+import MissionLogs from "@/pages/MissionLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
