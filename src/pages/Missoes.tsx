@@ -6,9 +6,12 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
 function getCareerTier(role: string): "agente" | "chefe" | "oficial" {
-  const rank = ROLE_HIERARCHY[role] ?? 10;
-  if (rank >= 35) return "oficial";
-  if (rank >= 25) return "chefe";
+  // Converte para minúsculas para evitar erros de "Agente" vs "agente"
+  const r = role.toLowerCase();
+if (rank >= 35 || r.includes("oficial") || r.includes("comissário")) return "oficial";
+  if (rank >= 25 || r.includes("chefe")) return "chefe";
+  
+  // Se não for nenhum dos de cima, é agente (padrão)
   return "agente";
 }
 
