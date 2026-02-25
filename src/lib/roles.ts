@@ -34,15 +34,15 @@ export function getUserRole(username: string): string {
   if (["superior1", "superior2"].includes(u)) return "Superintendente-Chefe";
   if (["superior3"].includes(u)) return "Superintendente";
   if (["ferreira"].includes(u)) return "Intendente";
-  if (["aaaa", "miguel"].includes(u)) return "Subintendente";
+  if (["aaaa", ""].includes(u)) return "Subintendente";
   if (["comissario1"].includes(u)) return "Comissário";
   if (["subcomissario1"].includes(u)) return "Subcomissário";
-  if (["chefecoordenador1"].includes(u)) return "Chefe Coordenador";
+  if (["miguel"].includes(u)) return "Chefe Coordenador";
   if (["chefeprincipal1"].includes(u)) return "Chefe Principal";
-  if (["viveiros", "gui", "crazy"].includes(u)) return "Chefe";
-  if (["afonso", "limz"].includes(u)) return "Agente Coordenador";
-  if (["rayzer", "leandro", "silvazin", "enzo"].includes(u)) return "Agente Principal";
-  if (["raul","silva","lopes", "guituga", "ganso", "falcon"].includes(u)) return "Agente";
+  if (["viveiros", "gui", "crazy", "limz"].includes(u)) return "Chefe";
+  if (["afonso", "silvazin" ].includes(u)) return "Agente Coordenador";
+  if (["rayzer", "leandro", "enzo"].includes(u)) return "Agente Principal";
+  if (["raul","silva","lopes", "ganso", "falcon", "amir"].includes(u)) return "Agente";
   if (["agenteprovisorio1"].includes(u)) return "Agente Provisório";
   return "Agente";
 }
