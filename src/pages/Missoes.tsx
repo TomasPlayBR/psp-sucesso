@@ -5,21 +5,10 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
-// --- CORREÇÃO DA FUNÇÃO DE CARGOS ---
 function getCareerTier(role: string): "agente" | "chefe" | "oficial" {
-  if (!role) return "agente";
-  const r = role.toLowerCase();
-  
-  // Pegamos o valor numérico da hierarquia com fallback para 0
-  const rankValue = ROLE_HIERARCHY[role] ?? 0;
-
-  if (rankValue >= 35 || r.includes("oficial") || r.includes("comissário")) {
-    return "oficial";
-  }
-  if (rankValue >= 25 || r.includes("chefe")) {
-    return "chefe";
-  }
-  
+  const rank = ROLE_HIERARCHY[role] ?? 10;
+  if (rank >= 35) return "oficial";
+  if (rank >= 25) return "chefe";
   return "agente";
 }
 
@@ -76,12 +65,6 @@ interface FileAttachment {
 
 export default function Missoes() {
   const { currentUser, registrarLog } = useAuth();
-  
-  // --- SEGURANÇA: SE NÃO HOUVER USER, NÃO RENDERIZA NADA QUE POSSA QUEBRAR ---
-  if (!currentUser) {
-    return <div className="p-10 text-center text-muted-foreground">A carregar perfil...</div>;
-  }
-
   const [currentMission, setCurrentMission] = useState<Mission | null>(null);
   const [companions, setCompanions] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -89,16 +72,44 @@ export default function Missoes() {
   const [history, setHistory] = useState<{ mission: string; time: string; xp: number }[]>([]);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [spinning, setSpinning] = useState(false);
+  const [missionStarted, setMissionStarted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0); // seconds
+  const [timerDone, setTimerDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const tier = getCareerTier(currentUser.role);
+  const tier = currentUser ? getCareerTier(currentUser.role) : "agente";
   const tierConfig = TIER_CONFIG[tier];
-  const pool = MISSIONS[tier] || MISSIONS.agente;
+  const pool = MISSIONS[tier];
   const totalXP = history.reduce((sum, h) => sum + h.xp, 0);
+
+  const TIMER_DURATION = 30 * 60; // 30 minutes in seconds
+
+  const startMission = () => {
+    setMissionStarted(true);
+    setTimerDone(false);
+    setTimeLeft(TIMER_DURATION);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setTimerDone(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const rollMission = () => {
     setCompleted(false);
     setAttachments([]);
+    setMissionStarted(false);
+    setTimerDone(false);
+    setTimeLeft(0);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setSpinning(true);
     
     let count = 0;
@@ -114,12 +125,18 @@ export default function Missoes() {
     setCompanions("");
   };
 
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     
     Array.from(files).forEach(file => {
-      if (file.size > 5 * 1024 * 1024) return; 
+      if (file.size > 5 * 1024 * 1024) return; // 5MB max
       const reader = new FileReader();
       reader.onload = () => {
         setAttachments(prev => [...prev, {
@@ -164,9 +181,12 @@ export default function Missoes() {
     setCompleting(false);
   };
 
-  useEffect(() => { 
-    if (pool.length > 0) rollMission(); 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
+
+  const canComplete = timerDone && attachments.length > 0 && !completed && !completing;
 
   const diffConfig = currentMission ? DIFF_CONFIG[currentMission.difficulty] : null;
 
@@ -218,10 +238,15 @@ export default function Missoes() {
       {/* Active Mission */}
       {currentMission && diffConfig && (
         <div className="relative" style={{ animation: spinning ? "none" : "fadeIn 0.5s ease" }}>
+          {/* Glow effect */}
           <div className="absolute -inset-1 rounded-xl opacity-20 blur-xl" style={{ background: diffConfig.color }} />
+          
           <div className="psp-card relative overflow-hidden rounded-xl">
+            {/* Top accent bar */}
             <div className="h-1" style={{ background: `linear-gradient(90deg, ${diffConfig.color}, transparent)` }} />
+            
             <div className="p-6 sm:p-8 space-y-6">
+              {/* Mission header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
@@ -253,101 +278,163 @@ export default function Missoes() {
                 )}
               </div>
 
+              {/* Description */}
               <div className="p-4 rounded-lg" style={{ background: "hsl(var(--secondary) / 0.5)", borderLeft: `3px solid ${diffConfig.color}` }}>
                 <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
                   {currentMission.description}
                 </p>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
-                    style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
-                    <Users size={14} />
-                    Acompanhados
-                  </label>
-                  <input
-                    type="text"
-                    className="psp-input rounded-lg"
-                    placeholder="Nomes dos acompanhantes..."
-                    value={companions}
-                    onChange={(e) => setCompanions(e.target.value)}
-                    disabled={completed}
-                  />
-                </div>
+              {/* Timer / Start Button */}
+              {!missionStarted && !completed && (
+                <button onClick={startMission} disabled={spinning}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-bold uppercase tracking-wider transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${diffConfig.color}, ${diffConfig.color}cc)`,
+                    color: "white",
+                    fontFamily: "Rajdhani, sans-serif",
+                    boxShadow: `0 0 25px ${diffConfig.color}40`,
+                  }}>
+                  <Clock size={20} />
+                  Iniciar Missão (30 min)
+                </button>
+              )}
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
-                    style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
-                    <Upload size={14} />
-                    Anexos (máx. 5MB)
-                  </label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx,.txt"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={completed}
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={completed}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                    style={{ 
-                      background: "hsl(var(--secondary))", 
-                      color: "hsl(var(--muted-foreground))",
-                      border: "1px dashed hsl(var(--border))",
-                      cursor: completed ? "not-allowed" : "pointer"
+              {missionStarted && !completed && (
+                <div className="flex items-center justify-center gap-4 p-4 rounded-xl"
+                  style={{
+                    background: timerDone ? "hsl(var(--success) / 0.1)" : "hsl(var(--secondary) / 0.8)",
+                    border: `1px solid ${timerDone ? "hsl(var(--success) / 0.3)" : diffConfig.border}`,
+                  }}>
+                  <Clock size={22} style={{ color: timerDone ? "hsl(var(--success))" : diffConfig.color }} className={!timerDone ? "animate-pulse" : ""} />
+                  <div className="text-center">
+                    <div className="text-3xl font-black tracking-widest" style={{
+                      fontFamily: "Rajdhani, sans-serif",
+                      color: timerDone ? "hsl(var(--success))" : "hsl(var(--foreground))",
                     }}>
-                    <Upload size={14} />
-                    Adicionar Ficheiros
-                  </button>
-                </div>
-              </div>
-
-              {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-3">
-                  {attachments.map((att, i) => (
-                    <div key={i} className="relative group rounded-lg overflow-hidden"
-                      style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
-                      {att.type.startsWith("image/") ? (
-                        <img src={att.data} alt={att.name} className="w-20 h-20 object-cover" />
-                      ) : (
-                        <div className="w-20 h-20 flex flex-col items-center justify-center gap-1 px-1">
-                          <FileText size={20} style={{ color: "hsl(var(--muted-foreground))" }} />
-                          <span className="text-[9px] text-center truncate w-full" style={{ color: "hsl(var(--muted-foreground))" }}>
-                            {att.name}
-                          </span>
-                        </div>
-                      )}
-                      {!completed && (
-                        <button
-                          onClick={() => removeAttachment(i)}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ background: "hsl(var(--destructive))", color: "white" }}>
-                          <X size={10} />
-                        </button>
-                      )}
+                      {timerDone ? "00:00" : formatTime(timeLeft)}
                     </div>
-                  ))}
+                    <div className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
+                      style={{ color: timerDone ? "hsl(var(--success))" : "hsl(var(--muted-foreground))" }}>
+                      {timerDone ? "Tempo concluído — pode finalizar" : "Tempo restante"}
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "hsl(var(--secondary))" }}>
+                    <div className="h-full rounded-full transition-all duration-1000"
+                      style={{
+                        width: `${((TIMER_DURATION - timeLeft) / TIMER_DURATION) * 100}%`,
+                        background: timerDone ? "hsl(var(--success))" : diffConfig.color,
+                      }} />
+                  </div>
                 </div>
               )}
 
-              {!completed && (
-                <button onClick={completeMission} disabled={completing || spinning}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-bold uppercase tracking-wider transition-all"
-                  style={{ 
-                    background: completing ? "hsl(var(--secondary))" : `linear-gradient(135deg, ${diffConfig.color}, ${diffConfig.color}cc)`,
-                    color: "white",
-                    fontFamily: "Rajdhani, sans-serif",
-                    boxShadow: completing ? "none" : `0 0 25px ${diffConfig.color}40`,
-                    opacity: completing ? 0.7 : 1,
-                  }}>
-                  <CheckCircle2 size={20} />
-                  {completing ? "A registar missão..." : "Concluir Missão"}
-                </button>
+              {/* Form fields — only show after mission started */}
+              {missionStarted && !completed && (
+                <>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {/* Companions */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                        style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
+                        <Users size={14} />
+                        Acompanhados
+                      </label>
+                      <input
+                        type="text"
+                        className="psp-input rounded-lg"
+                        placeholder="Nomes dos acompanhantes..."
+                        value={companions}
+                        onChange={(e) => setCompanions(e.target.value)}
+                      />
+                    </div>
+
+                    {/* File upload */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                        style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
+                        <Upload size={14} />
+                        Anexos (obrigatório, máx. 5MB)
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx,.txt"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                        style={{
+                          background: attachments.length > 0 ? "hsl(var(--success) / 0.1)" : "hsl(var(--secondary))",
+                          color: attachments.length > 0 ? "hsl(var(--success))" : "hsl(var(--muted-foreground))",
+                          border: attachments.length > 0 ? "1px solid hsl(var(--success) / 0.3)" : "1px dashed hsl(var(--border))",
+                        }}>
+                        <Upload size={14} />
+                        {attachments.length > 0 ? `${attachments.length} ficheiro(s) anexado(s)` : "Adicionar Ficheiros"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Attachment previews */}
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {attachments.map((att, i) => (
+                        <div key={i} className="relative group rounded-lg overflow-hidden"
+                          style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))" }}>
+                          {att.type.startsWith("image/") ? (
+                            <img src={att.data} alt={att.name} className="w-20 h-20 object-cover" />
+                          ) : (
+                            <div className="w-20 h-20 flex flex-col items-center justify-center gap-1 px-1">
+                              <FileText size={20} style={{ color: "hsl(var(--muted-foreground))" }} />
+                              <span className="text-[9px] text-center truncate w-full" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                {att.name}
+                              </span>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => removeAttachment(i)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ background: "hsl(var(--destructive))", color: "white" }}>
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Validation messages */}
+                  {!timerDone && (
+                    <p className="text-xs text-center" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <Clock size={11} className="inline mr-1" />
+                      Aguarde os 30 minutos para poder concluir a missão.
+                    </p>
+                  )}
+                  {timerDone && attachments.length === 0 && (
+                    <p className="text-xs text-center" style={{ color: "hsl(var(--destructive))" }}>
+                      <Upload size={11} className="inline mr-1" />
+                      É obrigatório adicionar pelo menos um ficheiro de prova.
+                    </p>
+                  )}
+
+                  {/* Complete button */}
+                  <button onClick={completeMission} disabled={!canComplete}
+                    className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      background: canComplete ? `linear-gradient(135deg, ${diffConfig.color}, ${diffConfig.color}cc)` : "hsl(var(--secondary))",
+                      color: canComplete ? "white" : "hsl(var(--muted-foreground))",
+                      fontFamily: "Rajdhani, sans-serif",
+                      boxShadow: canComplete ? `0 0 25px ${diffConfig.color}40` : "none",
+                      opacity: canComplete ? 1 : 0.5,
+                      cursor: canComplete ? "pointer" : "not-allowed",
+                    }}>
+                    <CheckCircle2 size={20} />
+                    {completing ? "A registar missão..." : "Concluir Missão"}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -372,7 +459,7 @@ export default function Missoes() {
             const isActive = currentMission?.title === m.title;
             return (
               <div key={i}
-                onClick={() => { if (!spinning) { setCurrentMission(m); setCompleted(false); setCompanions(""); setAttachments([]); } }}
+                onClick={() => { if (!spinning) { setCurrentMission(m); setCompleted(false); setCompanions(""); setAttachments([]); setMissionStarted(false); setTimerDone(false); setTimeLeft(0); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } } }}
                 className="psp-card p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 style={{ 
                   borderLeft: `3px solid ${isActive ? dc.color : "transparent"}`,
