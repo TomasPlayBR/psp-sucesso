@@ -42,7 +42,7 @@ export function getUserRole(username: string): string {
   if (["viveiros", "gui", "crazy", "limz"].includes(u)) return "Chefe";
   if (["afonso", "silvazin" ].includes(u)) return "Agente Coordenador";
   if (["rayzer", "leandro", "enzo"].includes(u)) return "Agente Principal";
-  if (["raul","silva","lopes", "ganso", "falcon", "amir", "pocoyo", "vortex"].includes(u)) return "Agente";
+  if (["raul","silva","lopes", "ganso", "falcon", "amir", "pocoyo", "vortex", "monteiro"].includes(u)) return "Agente";
   if (["agenteprovisorio1"].includes(u)) return "Agente Provisório";
   return "Agente";
 }
