@@ -6,7 +6,10 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
 function getCareerTier(role: string): "agente" | "chefe" | "oficial" {
-  const rank = ROLE_HIERARCHY[role] ?? 10;
+  // Se não houver role, assume agente
+  if (!role) return "agente";
+  const rank = ROLE_HIERARCHY[role] ?? 0;
+  
   if (rank >= 35) return "oficial";
   if (rank >= 25) return "chefe";
   return "agente";
@@ -65,6 +68,9 @@ interface FileAttachment {
 
 export default function Missoes() {
   const { currentUser, registrarLog } = useAuth();
+  if (!currentUser) {
+    return <div className="p-10 text-center animate-pulse">A carregar dados do Agente...</div>;
+  }
   const [currentMission, setCurrentMission] = useState<Mission | null>(null);
   const [companions, setCompanions] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -80,7 +86,7 @@ export default function Missoes() {
 
   const tier = currentUser ? getCareerTier(currentUser.role) : "agente";
   const tierConfig = TIER_CONFIG[tier];
-  const pool = MISSIONS[tier];
+  const pool = MISSIONS[tier] || MISSIONS.agente;
   const totalXP = history.reduce((sum, h) => sum + h.xp, 0);
 
   const TIMER_DURATION = 30 * 60; // 30 minutes in seconds
