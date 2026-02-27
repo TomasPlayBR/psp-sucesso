@@ -61,7 +61,7 @@ export default function JuntateaNos() {
               A PSP do Sucesso RP procura jogadores responsáveis e dedicados para manter a ordem, o respeito e a atividade no servidor.
             </p>
             <a
-              href="https://discord.gg/pspsucesso"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSf419JEX-aUwyMIaBXXg6Z4ujrM4Vm5RBH23UauxE23k8xyhw/viewform?usp=sharing&ouid=112163571958557650048"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold inline-flex items-center gap-2 text-base px-6 py-3"
