@@ -78,12 +78,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Radio size={14} /> Códigos 10
           </NavLink>
 
+          {/* MISSÕES: Visível para qualquer pessoa logada */}
+          {currentUser && (
+            <NavLink to="/missoes" className={navLinkClass}>
+              <Target size={14} /> Missões
+            </NavLink>
+          )}
+
+          {/* ADMINISTRAÇÃO: Visível apenas para Superiores */}
           {currentUser && isSuperior(currentUser.role) && (
             <>
-              <NavLink to="/missoes" className={navLinkClass}>
-                <Target size={14} /> Missões
-              </NavLink>
-              
               <NavLink to="/logs" className={navLinkClass}>
                 <ScrollText size={14} /> Logs
               </NavLink>
