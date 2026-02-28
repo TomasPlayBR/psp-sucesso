@@ -89,7 +89,7 @@ export default function Missoes() {
   const pool = MISSIONS[tier] || MISSIONS.agente;
   const totalXP = history.reduce((sum, h) => sum + h.xp, 0);
 
-  const TIMER_DURATION = 30 * 60; // 30 minutes in seconds
+  const TIMER_DURATION = 10 * 60; // 30 minutes in seconds
 
   const startMission = () => {
     setMissionStarted(true);
