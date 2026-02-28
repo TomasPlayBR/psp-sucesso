@@ -2,14 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_HIERARCHY } from "@/lib/roles";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
+import { Target, Users, Shuffle, CheckCircle2, Clock, MapPin, AlertTriangle, Shield, Crosshair, Zap, Star, Upload, X, FileText, Image as ImageIcon, Trophy, Medal, Award } from "lucide-react";
 
 function getCareerTier(role: string): "agente" | "chefe" | "oficial" {
-  // Se não houver role, assume agente
-  if (!role) return "agente";
-  const rank = ROLE_HIERARCHY[role] ?? 0;
-  
+  const rank = ROLE_HIERARCHY[role] ?? 10;
   if (rank >= 35) return "oficial";
   if (rank >= 25) return "chefe";
   return "agente";
@@ -60,17 +57,33 @@ const TIER_CONFIG: Record<string, { label: string; color: string; gradient: stri
   oficial: { label: "Oficial", color: "hsl(280 60% 60%)", gradient: "linear-gradient(135deg, hsl(280 60% 60%), hsl(260 50% 50%))" },
 };
 
+const DIFF_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  "Fácil": { color: "hsl(var(--success))", bg: "hsl(var(--success) / 0.1)", border: "hsl(var(--success) / 0.3)", label: "FÁCIL" },
+  "Média": { color: "hsl(43 90% 52%)", bg: "hsl(43 90% 52% / 0.1)", border: "hsl(43 90% 52% / 0.3)", label: "MÉDIA" },
+  "Difícil": { color: "hsl(var(--destructive))", bg: "hsl(var(--destructive) / 0.1)", border: "hsl(var(--destructive) / 0.3)", label: "DIFÍCIL" },
+};
+
+const TIER_CONFIG: Record<string, { label: string; color: string; gradient: string }> = {
+  agente: { label: "Agente", color: "hsl(200 70% 55%)", gradient: "linear-gradient(135deg, hsl(200 70% 55%), hsl(210 60% 45%))" },
+  chefe: { label: "Chefe", color: "hsl(43 90% 52%)", gradient: "linear-gradient(135deg, hsl(43 90% 52%), hsl(38 85% 42%))" },
+  oficial: { label: "Oficial", color: "hsl(280 60% 60%)", gradient: "linear-gradient(135deg, hsl(280 60% 60%), hsl(260 50% 50%))" },
+};
+
 interface FileAttachment {
   name: string;
   type: string;
   data: string;
 }
 
+interface LeaderboardEntry {
+  username: string;
+  totalXP: number;
+  missions: number;
+  cargo: string;
+}
+
 export default function Missoes() {
   const { currentUser, registrarLog } = useAuth();
-  if (!currentUser) {
-    return <div className="p-10 text-center animate-pulse">A carregar dados do Agente...</div>;
-  }
   const [currentMission, setCurrentMission] = useState<Mission | null>(null);
   const [companions, setCompanions] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -79,17 +92,37 @@ export default function Missoes() {
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [spinning, setSpinning] = useState(false);
   const [missionStarted, setMissionStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0); // seconds
+  const [timeLeft, setTimeLeft] = useState(0);
   const [timerDone, setTimerDone] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tier = currentUser ? getCareerTier(currentUser.role) : "agente";
   const tierConfig = TIER_CONFIG[tier];
-  const pool = MISSIONS[tier] || MISSIONS.agente;
+  const pool = MISSIONS[tier];
   const totalXP = history.reduce((sum, h) => sum + h.xp, 0);
 
-  const TIMER_DURATION = 10 * 60; // 30 minutes in seconds
+  // Leaderboard: aggregate XP from mission_logs
+  useEffect(() => {
+    const q = query(collection(db, "mission_logs"), orderBy("timestamp", "desc"));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const map: Record<string, LeaderboardEntry> = {};
+      snapshot.forEach((doc) => {
+        const d = doc.data();
+        const user = d.usuario || "Desconhecido";
+        if (!map[user]) map[user] = { username: user, totalXP: 0, missions: 0, cargo: d.cargo || "" };
+        map[user].totalXP += d.xp || 0;
+        map[user].missions += 1;
+        if (d.cargo) map[user].cargo = d.cargo;
+      });
+      const sorted = Object.values(map).sort((a, b) => b.totalXP - a.totalXP);
+      setLeaderboard(sorted);
+    });
+    return unsub;
+  }, []);
+
+  const TIMER_DURATION = 30 * 60; // 30 minutes in seconds
 
   const startMission = () => {
     setMissionStarted(true);
@@ -501,6 +534,80 @@ export default function Missoes() {
         </div>
       </div>
 
+      {/* Leaderboard */}
+      <div className="psp-card overflow-hidden">
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, hsl(43 90% 52%), hsl(38 85% 42%))", boxShadow: "0 0 20px hsl(43 90% 52% / 0.3)" }}>
+              <Trophy size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold tracking-wide" style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--foreground))" }}>
+                Ranking Global
+              </h3>
+              <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Baseado no XP acumulado
+              </p>
+            </div>
+          </div>
+
+          {leaderboard.length === 0 ? (
+            <p className="text-sm text-center py-6" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Nenhuma missão concluída ainda.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {leaderboard.slice(0, 15).map((entry, i) => {
+                const isMe = currentUser?.username === entry.username;
+                const podium = i < 3;
+                const podiumColors = [
+                  { bg: "hsl(43 90% 52% / 0.15)", border: "hsl(43 90% 52% / 0.4)", color: "hsl(43 90% 52%)" },
+                  { bg: "hsl(210 20% 70% / 0.15)", border: "hsl(210 20% 70% / 0.4)", color: "hsl(210 20% 70%)" },
+                  { bg: "hsl(25 60% 50% / 0.15)", border: "hsl(25 60% 50% / 0.4)", color: "hsl(25 60% 50%)" },
+                ];
+                const PodiumIcon = i === 0 ? Trophy : i === 1 ? Medal : Award;
+                return (
+                  <div key={entry.username}
+                    className="flex items-center gap-3 py-2.5 px-4 rounded-lg transition-all"
+                    style={{
+                      background: isMe ? "hsl(var(--gold) / 0.08)" : podium ? podiumColors[i].bg : "hsl(var(--secondary) / 0.3)",
+                      border: isMe ? "1px solid hsl(var(--gold) / 0.3)" : podium ? `1px solid ${podiumColors[i].border}` : "1px solid transparent",
+                    }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black"
+                      style={{
+                        background: podium ? podiumColors[i].bg : "hsl(var(--secondary))",
+                        color: podium ? podiumColors[i].color : "hsl(var(--muted-foreground))",
+                        border: podium ? `2px solid ${podiumColors[i].border}` : "none",
+                        fontFamily: "Rajdhani, sans-serif",
+                      }}>
+                      {podium ? <PodiumIcon size={16} /> : `#${i + 1}`}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold truncate" style={{
+                        fontFamily: "Rajdhani, sans-serif",
+                        color: isMe ? "hsl(var(--gold))" : "hsl(var(--foreground))",
+                      }}>
+                        {entry.username} {isMe && <span className="text-[9px] opacity-60">(tu)</span>}
+                      </div>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {entry.cargo} · {entry.missions} {entry.missions === 1 ? "missão" : "missões"}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-black flex items-center gap-1" style={{ color: "hsl(var(--gold))", fontFamily: "Rajdhani, sans-serif" }}>
+                        <Star size={12} fill="currentColor" /> {entry.totalXP.toLocaleString()}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>XP</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Session History */}
       {history.length > 0 && (
         <div className="psp-card p-5 space-y-3">
@@ -530,3 +637,7 @@ export default function Missoes() {
     </div>
   );
 }
+
+
+
+
