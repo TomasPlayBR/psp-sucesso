@@ -26,9 +26,15 @@ function emailToUsername(email: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-// Try to fetch role from Firestore "roles" collection, fallback to hardcoded map
+// Try to fetch role from Firestore "roles" collection (by username), fallback to hardcoded map
 async function fetchRole(uid: string, username: string): Promise<string> {
   try {
+    // Try by lowercase username first (set by admin panel)
+    const snapByName = await getDoc(doc(db, "roles", username.toLowerCase()));
+    if (snapByName.exists() && snapByName.data().role) {
+      return snapByName.data().role as string;
+    }
+    // Legacy: try by uid
     const snap = await getDoc(doc(db, "roles", uid));
     if (snap.exists() && snap.data().role) {
       return snap.data().role as string;
