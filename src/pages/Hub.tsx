@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  collection, addDoc, deleteDoc, doc, updateDoc,
+  collection, addDoc, deleteDoc, doc, updateDoc, setDoc,
   onSnapshot, orderBy, query, serverTimestamp, writeBatch
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -18,6 +18,7 @@ interface Membro {
   cursos: string;
   dataEntrada: string;
   ordem: number;
+  username: string;
 }
 
 const PATENTES = [
@@ -33,7 +34,7 @@ export default function Hub() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", idAgente: "", patente: "", discord: "", callsign: "", dataEntrada: "", cursos: "" });
+  const [form, setForm] = useState({ nome: "", idAgente: "", patente: "", discord: "", callsign: "", dataEntrada: "", cursos: "", username: "" });
   const [loading, setLoading] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
@@ -54,7 +55,7 @@ export default function Hub() {
   );
 
   const resetForm = () => {
-    setForm({ nome: "", idAgente: "", patente: "", discord: "", callsign: "", dataEntrada: "", cursos: "" });
+    setForm({ nome: "", idAgente: "", patente: "", discord: "", callsign: "", dataEntrada: "", cursos: "", username: "" });
     setEditingId(null);
     setShowForm(false);
   };
@@ -78,6 +79,14 @@ export default function Hub() {
         });
         await registrarLog(`Registou novo membro: ${form.nome}`);
       }
+      // Sync role to Firestore roles collection if username is provided
+      if (form.username.trim() && form.patente) {
+        await setDoc(doc(db, "roles", form.username.trim().toLowerCase()), {
+          role: form.patente,
+          updatedAt: serverTimestamp(),
+        });
+        await registrarLog(`Atualizou cargo de ${form.username.trim()} para ${form.patente}`);
+      }
       resetForm();
     } catch (e: any) {
       alert("Erro: " + e.message);
@@ -87,7 +96,7 @@ export default function Hub() {
   };
 
   const handleEdit = (m: Membro) => {
-    setForm({ nome: m.nome, idAgente: m.idAgente, patente: m.patente, discord: m.discord || "", callsign: m.callsign || "", dataEntrada: m.dataEntrada || "", cursos: m.cursos || "" });
+    setForm({ nome: m.nome, idAgente: m.idAgente, patente: m.patente, discord: m.discord || "", callsign: m.callsign || "", dataEntrada: m.dataEntrada || "", cursos: m.cursos || "", username: m.username || "" });
     setEditingId(m.id);
     setShowForm(true);
   };
@@ -165,6 +174,7 @@ export default function Hub() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Nome *", key: "nome", placeholder: "Nome completo" },
+                { label: "Username (login)", key: "username", placeholder: "ex: tomas" },
                 { label: "ID/Passaporte *", key: "idAgente", placeholder: "ID" },
                 { label: "Discord", key: "discord", placeholder: "Discord#0000" },
                 { label: "Callsign", key: "callsign", placeholder: "ex: P-01" },
