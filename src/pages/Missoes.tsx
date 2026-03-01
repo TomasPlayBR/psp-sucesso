@@ -40,21 +40,7 @@ const MISSIONS: Record<string, Mission[]> = {
     { title: "Inspeção de Unidade", description: "Realizar inspeção completa a uma unidade operacional, avaliando prontidão e recursos.", difficulty: "Média", icon: <Shield size={20} />, xp: 250 },
     { title: "Operação Interagências", description: "Coordenar operação conjunta com outras forças de segurança.", difficulty: "Difícil", icon: <Users size={20} />, xp: 400 },
     { title: "Revisão Disciplinar", description: "Conduzir processo de revisão disciplinar e elaborar parecer fundamentado.", difficulty: "Média", icon: <AlertTriangle size={20} />, xp: 250 },
-    { title: "Comando de Crise", description: "Assumir comando total numa situação de crise de grande escala com múltiplas equipas.", difficulty: "Difícil", icon: <Crosshair size={20} />, xp: 400 },
-    { title: "Formação Tática", description: "Planear e conduzir sessão de formação tática para chefes e agentes.", difficulty: "Média", icon: <MapPin size={20} />, xp: 250 },
   ],
-};
-
-const DIFF_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  "Fácil": { color: "hsl(var(--success))", bg: "hsl(var(--success) / 0.1)", border: "hsl(var(--success) / 0.3)", label: "FÁCIL" },
-  "Média": { color: "hsl(43 90% 52%)", bg: "hsl(43 90% 52% / 0.1)", border: "hsl(43 90% 52% / 0.3)", label: "MÉDIA" },
-  "Difícil": { color: "hsl(var(--destructive))", bg: "hsl(var(--destructive) / 0.1)", border: "hsl(var(--destructive) / 0.3)", label: "DIFÍCIL" },
-};
-
-const TIER_CONFIG: Record<string, { label: string; color: string; gradient: string }> = {
-  agente: { label: "Agente", color: "hsl(200 70% 55%)", gradient: "linear-gradient(135deg, hsl(200 70% 55%), hsl(210 60% 45%))" },
-  chefe: { label: "Chefe", color: "hsl(43 90% 52%)", gradient: "linear-gradient(135deg, hsl(43 90% 52%), hsl(38 85% 42%))" },
-  oficial: { label: "Oficial", color: "hsl(280 60% 60%)", gradient: "linear-gradient(135deg, hsl(280 60% 60%), hsl(260 50% 50%))" },
 };
 
 const DIFF_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
