@@ -36,13 +36,13 @@ export function getUserRole(username: string): string {
   if (["A"].includes(u)) return "Intendente";
   if (["aaaa", ""].includes(u)) return "Subintendente";
   if (["miguel"].includes(u)) return "Comissário";
-  if (["subcomissario1"].includes(u)) return "Subcomissário";
-  if (["crazy", "limz", "silvazin"].includes(u)) return "Chefe Coordenador";
+  if (["silvazin", "crazy"].includes(u)) return "Subcomissário";
+  if (["limz"].includes(u)) return "Chefe Coordenador";
   if (["chefeprincipal1"].includes(u)) return "Chefe Principal";
   if (["viveiros", "gui"].includes(u)) return "Chefe";
   if (["afonso" ].includes(u)) return "Agente Coordenador";
-  if (["rayzer", "leandro", "enzo", "amir"].includes(u)) return "Agente Principal";
-  if ([ "ganso", "falcon", "pocoyo", "vortex", "monteiro", "santiago", "beiramar", "dre"].includes(u)) return "Agente";
+  if (["enzo", "amir"].includes(u)) return "Agente Principal";
+  if ([ "ganso", "falcon", "pocoyo", "monteiro", "santiago"].includes(u)) return "Agente";
   if (["agenteprovisorio1"].includes(u)) return "Agente Provisório";
   return "Agente";
 }
