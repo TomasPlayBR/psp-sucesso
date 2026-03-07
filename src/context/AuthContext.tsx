@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { getUserRole } from "@/lib/roles";
 
@@ -28,20 +28,28 @@ function emailToUsername(email: string): string {
 
 // Try to fetch role from Firestore "roles" collection (by username), fallback to hardcoded map
 async function fetchRole(uid: string, username: string): Promise<string> {
+  const lookupKey = username.toLowerCase();
+  console.log("[fetchRole] Looking up role for:", lookupKey);
   try {
     // Try by lowercase username first (set by admin panel)
-    const snapByName = await getDoc(doc(db, "roles", username.toLowerCase()));
+    const snapByName = await getDoc(doc(db, "roles", lookupKey));
     if (snapByName.exists() && snapByName.data().role) {
+      console.log("[fetchRole] Found Firestore role by username:", snapByName.data().role);
       return snapByName.data().role as string;
     }
     // Legacy: try by uid
     const snap = await getDoc(doc(db, "roles", uid));
     if (snap.exists() && snap.data().role) {
+      console.log("[fetchRole] Found Firestore role by uid:", snap.data().role);
       return snap.data().role as string;
     }
-  } catch (_) {}
+  } catch (e) {
+    console.error("[fetchRole] Error fetching role:", e);
+  }
   // Fallback to hardcoded map (for backwards compat)
-  return getUserRole(username.toLowerCase());
+  const fallback = getUserRole(lookupKey);
+  console.log("[fetchRole] Using hardcoded fallback:", fallback);
+  return fallback;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -50,17 +58,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to Firebase Auth state — source of truth, no localStorage
   useEffect(() => {
+    let roleUnsub: (() => void) | null = null;
+    
     const unsub = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      // Clean up previous role listener
+      if (roleUnsub) { roleUnsub(); roleUnsub = null; }
+      
       if (firebaseUser && firebaseUser.email) {
         const username = emailToUsername(firebaseUser.email);
+        const lookupKey = username.toLowerCase();
+        
+        // Initial role fetch
         const role = await fetchRole(firebaseUser.uid, username);
         setCurrentUser({ uid: firebaseUser.uid, username, role });
+        
+        // Listen for real-time role changes from Firestore
+        roleUnsub = onSnapshot(doc(db, "roles", lookupKey), (snap) => {
+          if (snap.exists() && snap.data().role) {
+            const newRole = snap.data().role as string;
+            console.log("[roleListener] Role updated in real-time:", newRole);
+            setCurrentUser(prev => prev ? { ...prev, role: newRole } : null);
+          }
+        });
       } else {
         setCurrentUser(null);
       }
       setLoading(false);
     });
-    return unsub;
+    return () => {
+      unsub();
+      if (roleUnsub) roleUnsub();
+    };
   }, []);
 
   const registrarLog = async (acao: string) => {
