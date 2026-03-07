@@ -240,7 +240,7 @@ export default function Missoes() {
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs font-bold px-3 py-1 rounded-full" 
                     style={{ background: `${tierConfig.color}20`, color: tierConfig.color, border: `1px solid ${tierConfig.color}40` }}>
-                    {tierConfig.label}
+                    {currentUser?.role || tierConfig.label}
                   </span>
                   {totalXP > 0 && (
                     <span className="text-xs font-semibold flex items-center gap-1" style={{ color: "hsl(var(--gold))" }}>
