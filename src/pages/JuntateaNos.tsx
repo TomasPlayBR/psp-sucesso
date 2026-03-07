@@ -87,31 +87,6 @@ export default function JuntateaNos() {
             </ul>
           </div>
 
-          {/* Como funciona */}
-          <div className="psp-card p-6">
-            <h2 className="text-lg font-bold mb-4 uppercase tracking-widest"
-              style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--gold))" }}>
-              Como Funciona o Recrutamento
-            </h2>
-            <ol className="space-y-3">
-              {[
-                "Abertura de ticket na categoria Recrutamento no Discord.",
-                "Preenchimento das perguntas iniciais em formato de formulário.",
-                "Análise pela equipa responsável.",
-                "Entrevista com um superior.",
-                "Resultado final comunicado no ticket pela direção.",
-              ].map((step, i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-                    style={{ background: "hsl(var(--gold)/0.15)", color: "hsl(var(--gold))", border: "1px solid hsl(var(--gold)/0.4)" }}>
-                    {i + 1}
-                  </span>
-                  <span className="text-sm" style={{ color: "hsl(var(--foreground))" }}>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
           {/* Critérios */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CRITERIOS.map(({ titulo, desc }) => (
