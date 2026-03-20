@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AlertTriangle } from "lucide-react";
-import emblem from "@/assets/psp-emblem.png";
+import emblem from "@/assets/psp-logo.png";
 
 interface BlacklistEntry {
   id: string;
