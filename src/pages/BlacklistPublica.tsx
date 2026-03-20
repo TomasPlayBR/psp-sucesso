@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AlertTriangle } from "lucide-react";
-import emblem from "@/assets/psp-logo.png";
+import emblem from "@/assets/psp-emblem.png";
 
 interface BlacklistEntry {
   id: string;
@@ -31,7 +31,21 @@ export default function BlacklistPublica() {
   useEffect(() => {
     const q = query(collection(db, "blacklist"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, snap => {
-      setEntries(snap.docs.map(d => ({ id: d.id, id_: d.data().id, ...d.data() } as BlacklistEntry)));
+      setEntries(snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          nome: data.nome || "",
+          id_: data.id || "",
+          motivo: data.motivo || "",
+          perigo: data.perigo || "Baixo",
+          autor: data.autor || "Sistema",
+          data: data.data || "—",
+          hora: data.hora || "—",
+        };
+      }));
+    }, (error) => {
+      console.error("Erro ao carregar blacklist pública:", error);
     });
     return unsub;
   }, []);
