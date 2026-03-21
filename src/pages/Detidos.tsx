@@ -158,28 +158,43 @@ export default function Detidos() {
 
   // Sound alert for expired
   useEffect(() => {
-    if (!soundEnabled) return;
-    detidos.forEach(d => {
-      const remaining = d.fimTimestamp - now;
-      if (remaining <= 0 && !alertedRef.current.has(d.id)) {
-        alertedRef.current.add(d.id);
-        try {
-          // Use Web Audio API for a beep
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 880;
-          osc.type = "square";
-          gain.gain.value = 0.15;
-          osc.start();
-          setTimeout(() => { osc.stop(); ctx.close(); }, 400);
-        } catch {}
-      }
-    });
-  }, [now, detidos, soundEnabled]);
+    useEffect(() => {
+  if (!soundEnabled) return;
 
+  // Função que verifica se há alguém expirado e toca o som
+  const checkAndPlaySound = () => {
+    const temExpirados = detidos.some(d => d.fimTimestamp - Date.now() <= 0);
+    
+    if (temExpirados) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.frequency.value = 880; // Frequência do "bipe"
+        osc.type = "square";
+        gain.gain.value = 0.1; // Volume
+        
+        osc.start();
+        // O som dura 300ms
+        setTimeout(() => { 
+          osc.stop(); 
+          ctx.close(); 
+        }, 300);
+      } catch (e) {
+        console.error("Erro ao reproduzir som:", e);
+      }
+    }
+  };
+
+  // Toca o som a cada 2 segundos se houver detidos expirados
+  const soundInterval = setInterval(checkAndPlaySound, 2000);
+
+  return () => clearInterval(soundInterval);
+}, [detidos, soundEnabled]);
   const resetForm = () => {
     setFNome(""); setFCrime(""); setFDuracao(30);
     setFArtigos(""); setFObjetos(""); setFAdvogado("nao");
