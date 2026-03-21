@@ -246,7 +246,7 @@ export default function Detidos() {
             <div>
               <h1 className="text-xl font-bold uppercase tracking-widest"
                 style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--gold))" }}>
-                Gestão de Detidos
+                Registro de Detenção
               </h1>
               <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Painel de controlo de custódia em tempo real
