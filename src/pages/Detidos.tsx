@@ -339,7 +339,7 @@ export default function Detidos() {
                       <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
                         style={{ color: "hsl(var(--muted-foreground))" }}>Artigos Infringidos</label>
                       <Input value={fArtigos} onChange={e => setFArtigos(e.target.value)}
-                        placeholder="Ex: Art. 210º, Art. 143º..." maxLength={200} className="psp-input" />
+                        placeholder="Ex: Art. 1 Lei 1, Art. 3 lei 5..." maxLength={200} className="psp-input" />
                     </div>
 
                     {/* Objetos */}
@@ -347,7 +347,7 @@ export default function Detidos() {
                       <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
                         style={{ color: "hsl(var(--muted-foreground))" }}>Objetos Apreendidos</label>
                       <Input value={fObjetos} onChange={e => setFObjetos(e.target.value)}
-                        placeholder="Ex: 1x Glock, 50g de Erva..." maxLength={200} className="psp-input" />
+                        placeholder="Ex: 1x Glock, 50 Metas..." maxLength={200} className="psp-input" />
                     </div>
 
                     {/* Advogado */}
