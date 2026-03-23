@@ -26,60 +26,35 @@ interface Detido {
   artigos: string;
   objetosApreendidos: string;
   direitoAdvogado: "sim" | "nao" | "solicitado";
+  fianca: string;
   notas: string;
   criadoEm: string;
   horaEntrada: string;
 }
 
 const CRIMES = [
-  "Difamação", 
-  "Desacatos", 
-  "Agressão", 
-  "Sem CC",
-  "Fuga às Autoridades", 
-  "Modificações Ilegais", 
-  "Condução Perigosa e/ou Negligente", 
-  "Sinais luminosos", 
-  "Conduzir sem habilitação", 
-  "Poluição Sonora", 
-  "Conduzir mota sem capacete",
-  "Furto de uma viatura civil", 
-  "Furto de uma viatura governamental", 
-  "Assalto a um civil", 
-  "Assalto a uma loja", 
-  "Assalto a um banco",
-  "Tentativa de homicídio de um civil", 
-  "Tentativa de homicídio de um agente", 
-  "Tentativa de Homicídio por negligência", 
-  "Homicídio por negligência", 
-  "Homicídio de um civil", 
-  "Homicídio de um agente",
-  "Posse de arma de baixo calibre s/licença", 
-  "Posse de arma de médio calibre", 
-  "Posse de arma de alto calibre", 
-  "Tráfico de Armas (posse de 3+ armas)", 
-  "Posse de dinheiro sujo", 
-  "Posse de substâncias ilegais", 
-  "Tráfico de substância controlada", 
-  "Plantação de marijuana",
-  "Uso indevido de uma arma de fogo com licença", 
-  "Desobediência às forças policiais", 
-  "Desobediência ao tribunal", 
-  "Perjúrio", 
-  "Utilização indevida do Serviço de Emergência", 
-  "Provocação intencional das autoridades reincidente", 
-  "Fuga ao fisco", 
-  "Pesca em zonas proibidas"
+  "Assalto a Loja",
+  "Assalto a Banco",
+  "Roubo de Veículo",
+  "Condução Perigosa",
+  "Porte Ilegal de Arma",
+  "Tráfico de Droga",
+  "Homicídio",
+  "Tentativa de Homicídio",
+  "Agressão",
+  "Sequestro",
+  "Evasão à Polícia",
+  "Desacato à Autoridade",
+  "Vandalismo",
+  "Posse de Objetos Ilegais",
+  "Outro",
 ];
 
 const DURACOES = [
-  { label: "5 minutos", value: 5 },
   { label: "10 minutos", value: 10 },
   { label: "15 minutos", value: 15 },
   { label: "20 minutos", value: 20 },
-  { label: "25 minutos", value: 25 },
   { label: "30 minutos", value: 30 },
-  { label: "35 minutos", value: 35 },
   { label: "45 minutos", value: 45 },
   { label: "60 minutos", value: 60 },
 ];
@@ -116,11 +91,12 @@ export default function Detidos() {
 
   // Form
   const [fNome, setFNome] = useState("");
-  const [fCrime, setFCrime] = useState("");
+  const [fCrimes, setFCrimes] = useState<string[]>([]);
   const [fDuracao, setFDuracao] = useState(30);
   const [fArtigos, setFArtigos] = useState("");
   const [fObjetos, setFObjetos] = useState("");
   const [fAdvogado, setFAdvogado] = useState<"sim" | "nao" | "solicitado">("nao");
+  const [fFianca, setFFianca] = useState("");
   const [fNotas, setFNotas] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -141,6 +117,7 @@ export default function Detidos() {
           artigos: data.artigos || "",
           objetosApreendidos: data.objetosApreendidos || "",
           direitoAdvogado: data.direitoAdvogado || "nao",
+          fianca: data.fianca || "",
           notas: data.notas || "",
           criadoEm: data.criadoEm || "",
           horaEntrada: data.horaEntrada || "",
@@ -158,51 +135,36 @@ export default function Detidos() {
 
   // Sound alert for expired
   useEffect(() => {
-    useEffect(() => {
-  if (!soundEnabled) return;
-
-  // Função que verifica se há alguém expirado e toca o som
-  const checkAndPlaySound = () => {
-    const temExpirados = detidos.some(d => d.fimTimestamp - Date.now() <= 0);
-    
-    if (temExpirados) {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        
-        osc.frequency.value = 880; // Frequência do "bipe"
-        osc.type = "square";
-        gain.gain.value = 0.1; // Volume
-        
-        osc.start();
-        // O som dura 300ms
-        setTimeout(() => { 
-          osc.stop(); 
-          ctx.close(); 
-        }, 300);
-      } catch (e) {
-        console.error("Erro ao reproduzir som:", e);
+    if (!soundEnabled) return;
+    detidos.forEach(d => {
+      const remaining = d.fimTimestamp - now;
+      if (remaining <= 0 && !alertedRef.current.has(d.id)) {
+        alertedRef.current.add(d.id);
+        try {
+          // Use Web Audio API for a beep
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          osc.type = "square";
+          gain.gain.value = 0.15;
+          osc.start();
+          setTimeout(() => { osc.stop(); ctx.close(); }, 400);
+        } catch {}
       }
-    }
-  };
+    });
+  }, [now, detidos, soundEnabled]);
 
-  // Toca o som a cada 2 segundos se houver detidos expirados
-  const soundInterval = setInterval(checkAndPlaySound, 2000);
-
-  return () => clearInterval(soundInterval);
-}, [detidos, soundEnabled]);
   const resetForm = () => {
-    setFNome(""); setFCrime(""); setFDuracao(30);
+    setFNome(""); setFCrimes([]); setFDuracao(30);
     setFArtigos(""); setFObjetos(""); setFAdvogado("nao");
     setFFianca(""); setFNotas("");
   };
 
   const handleSubmit = async () => {
-    if (!fNome.trim() || !fCrime || !currentUser) return;
+    if (!fNome.trim() || fCrimes.length === 0 || !currentUser) return;
     setSubmitting(true);
     try {
       const agora = Date.now();
@@ -210,7 +172,7 @@ export default function Detidos() {
       const now = new Date();
       await addDoc(collection(db, "detidos"), {
         nome: fNome.trim(),
-        crime: fCrime,
+        crime: fCrimes.join(", "),
         duracao: fDuracao,
         fimTimestamp: fim,
         responsavel: currentUser.username,
@@ -218,12 +180,13 @@ export default function Detidos() {
         artigos: fArtigos.trim(),
         objetosApreendidos: fObjetos.trim(),
         direitoAdvogado: fAdvogado,
+        fianca: fFianca.trim(),
         notas: fNotas.trim(),
         criadoEm: now.toLocaleDateString("pt-PT"),
         horaEntrada: now.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }),
         timestamp: serverTimestamp(),
       });
-      await registrarLog(`Registou detido: ${fNome.trim()} — ${fCrime} (${fDuracao}min)`);
+      await registrarLog(`Registou detido: ${fNome.trim()} — ${fCrimes.join(", ")} (${fDuracao}min)`);
       resetForm();
       setDialogOpen(false);
     } catch (e) {
@@ -261,7 +224,7 @@ export default function Detidos() {
             <div>
               <h1 className="text-xl font-bold uppercase tracking-widest"
                 style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(var(--gold))" }}>
-                Registro de Detenção
+                Gestão de Detidos
               </h1>
               <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Painel de controlo de custódia em tempo real
@@ -317,18 +280,33 @@ export default function Detidos() {
                       maxLength={80} className="psp-input" />
                   </div>
 
-                  {/* Crime */}
+                  {/* Crimes - Multi-select */}
                   <div>
                     <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
-                      style={{ color: "hsl(var(--muted-foreground))" }}>Crime Principal *</label>
-                    <Select value={fCrime} onValueChange={setFCrime}>
-                      <SelectTrigger className="psp-input">
-                        <SelectValue placeholder="Selecionar crime..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CRIMES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                      style={{ color: "hsl(var(--muted-foreground))" }}>Crimes * ({fCrimes.length} selecionado{fCrimes.length !== 1 ? "s" : ""})</label>
+                    <div className="grid grid-cols-2 gap-1.5 p-3 rounded-lg max-h-48 overflow-y-auto"
+                      style={{ background: "hsl(var(--secondary) / 0.5)", border: "1px solid hsl(var(--border))" }}>
+                      {CRIMES.map(c => {
+                        const checked = fCrimes.includes(c);
+                        return (
+                          <label key={c}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-xs"
+                            style={{
+                              background: checked ? "hsl(var(--gold) / 0.1)" : "transparent",
+                              color: checked ? "hsl(var(--gold))" : "hsl(var(--foreground))",
+                            }}>
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                if (v) setFCrimes(prev => [...prev, c]);
+                                else setFCrimes(prev => prev.filter(x => x !== c));
+                              }}
+                            />
+                            {c}
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Duração */}
@@ -354,7 +332,7 @@ export default function Detidos() {
                       <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
                         style={{ color: "hsl(var(--muted-foreground))" }}>Artigos Infringidos</label>
                       <Input value={fArtigos} onChange={e => setFArtigos(e.target.value)}
-                        placeholder="Ex: Art. 1 Lei 1, Art. 3 lei 5..." maxLength={200} className="psp-input" />
+                        placeholder="Ex: Art. 210º, Art. 143º..." maxLength={200} className="psp-input" />
                     </div>
 
                     {/* Objetos */}
@@ -362,7 +340,7 @@ export default function Detidos() {
                       <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
                         style={{ color: "hsl(var(--muted-foreground))" }}>Objetos Apreendidos</label>
                       <Input value={fObjetos} onChange={e => setFObjetos(e.target.value)}
-                        placeholder="Ex: 1x Glock, 50 Metas..." maxLength={200} className="psp-input" />
+                        placeholder="Ex: 1x Glock, 50g de Erva..." maxLength={200} className="psp-input" />
                     </div>
 
                     {/* Advogado */}
@@ -381,6 +359,14 @@ export default function Detidos() {
                       </Select>
                     </div>
 
+                    {/* Fiança */}
+                    <div className="mb-3">
+                      <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
+                        style={{ color: "hsl(var(--muted-foreground))" }}>Fiança</label>
+                      <Input value={fFianca} onChange={e => setFFianca(e.target.value)}
+                        placeholder="Ex: $5.000 ou N/A" maxLength={50} className="psp-input" />
+                    </div>
+
                     {/* Notas */}
                     <div>
                       <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
@@ -391,7 +377,7 @@ export default function Detidos() {
                   </div>
 
                   <Button onClick={handleSubmit}
-                    disabled={submitting || !fNome.trim() || !fCrime}
+                    disabled={submitting || !fNome.trim() || fCrimes.length === 0}
                     className="w-full font-bold uppercase tracking-widest text-xs py-3"
                     style={{ background: "hsl(var(--gold))", color: "hsl(var(--background))", fontFamily: "Rajdhani, sans-serif" }}>
                     {submitting ? "A registar..." : "Registar na Cela"}
