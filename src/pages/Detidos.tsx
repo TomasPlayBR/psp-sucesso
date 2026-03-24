@@ -26,7 +26,6 @@ interface Detido {
   artigos: string;
   objetosApreendidos: string;
   direitoAdvogado: "sim" | "nao" | "solicitado";
-  fianca: string;
   notas: string;
   criadoEm: string;
   horaEntrada: string;
@@ -43,7 +42,7 @@ const CRIMES = [
   "Tentativa de Homicídio",
   "Agressão",
   "Sequestro",
-  "Evasão à Polícia",
+  "Fuga as autoridades",
   "Desacato à Autoridade",
   "Vandalismo",
   "Posse de Objetos Ilegais",
@@ -51,11 +50,17 @@ const CRIMES = [
 ];
 
 const DURACOES = [
+  { label: "5 minutos", value: 5 },
   { label: "10 minutos", value: 10 },
   { label: "15 minutos", value: 15 },
   { label: "20 minutos", value: 20 },
+  { label: "25 minutos", value: 25 },
   { label: "30 minutos", value: 30 },
+  { label: "35 minutos", value: 35 },
+  { label: "40 minutos", value: 40 },
   { label: "45 minutos", value: 45 },
+  { label: "50 minutos", value: 50 },
+  { label: "55 minutos", value: 55 },
   { label: "60 minutos", value: 60 },
 ];
 
@@ -96,7 +101,6 @@ export default function Detidos() {
   const [fArtigos, setFArtigos] = useState("");
   const [fObjetos, setFObjetos] = useState("");
   const [fAdvogado, setFAdvogado] = useState<"sim" | "nao" | "solicitado">("nao");
-  const [fFianca, setFFianca] = useState("");
   const [fNotas, setFNotas] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -117,7 +121,6 @@ export default function Detidos() {
           artigos: data.artigos || "",
           objetosApreendidos: data.objetosApreendidos || "",
           direitoAdvogado: data.direitoAdvogado || "nao",
-          fianca: data.fianca || "",
           notas: data.notas || "",
           criadoEm: data.criadoEm || "",
           horaEntrada: data.horaEntrada || "",
@@ -180,7 +183,6 @@ export default function Detidos() {
         artigos: fArtigos.trim(),
         objetosApreendidos: fObjetos.trim(),
         direitoAdvogado: fAdvogado,
-        fianca: fFianca.trim(),
         notas: fNotas.trim(),
         criadoEm: now.toLocaleDateString("pt-PT"),
         horaEntrada: now.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }),
@@ -357,14 +359,6 @@ export default function Detidos() {
                           <SelectItem value="solicitado">Já solicitado</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    {/* Fiança */}
-                    <div className="mb-3">
-                      <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
-                        style={{ color: "hsl(var(--muted-foreground))" }}>Fiança</label>
-                      <Input value={fFianca} onChange={e => setFFianca(e.target.value)}
-                        placeholder="Ex: $5.000 ou N/A" maxLength={50} className="psp-input" />
                     </div>
 
                     {/* Notas */}
