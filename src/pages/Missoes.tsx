@@ -78,11 +78,8 @@ export default function Missoes() {
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [spinning, setSpinning] = useState(false);
   const [missionStarted, setMissionStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [timerDone, setTimerDone] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tier = currentUser ? getCareerTier(currentUser.role) : "agente";
   const tierConfig = TIER_CONFIG[tier];
@@ -108,26 +105,6 @@ export default function Missoes() {
     return unsub;
   }, []);
 
-  const TIMER_DURATION = 10 * 60; // 30 minutes in seconds
-
-  const startMission = () => {
-    setMissionStarted(true);
-    setTimerDone(false);
-    setTimeLeft(TIMER_DURATION);
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
-          setTimerDone(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   const rollMission = () => {
     setCompleted(false);
     setAttachments([]);
@@ -148,12 +125,6 @@ export default function Missoes() {
       }
     }, 80);
     setCompanions("");
-  };
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,13 +176,6 @@ export default function Missoes() {
     }
     setCompleting(false);
   };
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);
-
-  const canComplete = timerDone && attachments.length > 0 && !completed && !completing;
 
   const diffConfig = currentMission ? DIFF_CONFIG[currentMission.difficulty] : null;
 
@@ -309,51 +273,6 @@ export default function Missoes() {
                   {currentMission.description}
                 </p>
               </div>
-
-              {/* Timer / Start Button */}
-              {!missionStarted && !completed && (
-                <button onClick={startMission} disabled={spinning}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-bold uppercase tracking-wider transition-all"
-                  style={{
-                    background: `linear-gradient(135deg, ${diffConfig.color}, ${diffConfig.color}cc)`,
-                    color: "white",
-                    fontFamily: "Rajdhani, sans-serif",
-                    boxShadow: `0 0 25px ${diffConfig.color}40`,
-                  }}>
-                  <Clock size={20} />
-                  Iniciar Missão (10 min)
-                </button>
-              )}
-
-              {missionStarted && !completed && (
-                <div className="flex items-center justify-center gap-4 p-4 rounded-xl"
-                  style={{
-                    background: timerDone ? "hsl(var(--success) / 0.1)" : "hsl(var(--secondary) / 0.8)",
-                    border: `1px solid ${timerDone ? "hsl(var(--success) / 0.3)" : diffConfig.border}`,
-                  }}>
-                  <Clock size={22} style={{ color: timerDone ? "hsl(var(--success))" : diffConfig.color }} className={!timerDone ? "animate-pulse" : ""} />
-                  <div className="text-center">
-                    <div className="text-3xl font-black tracking-widest" style={{
-                      fontFamily: "Rajdhani, sans-serif",
-                      color: timerDone ? "hsl(var(--success))" : "hsl(var(--foreground))",
-                    }}>
-                      {timerDone ? "00:00" : formatTime(timeLeft)}
-                    </div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest mt-0.5"
-                      style={{ color: timerDone ? "hsl(var(--success))" : "hsl(var(--muted-foreground))" }}>
-                      {timerDone ? "Tempo concluído — pode finalizar" : "Tempo restante"}
-                    </div>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "hsl(var(--secondary))" }}>
-                    <div className="h-full rounded-full transition-all duration-1000"
-                      style={{
-                        width: `${((TIMER_DURATION - timeLeft) / TIMER_DURATION) * 100}%`,
-                        background: timerDone ? "hsl(var(--success))" : diffConfig.color,
-                      }} />
-                  </div>
-                </div>
-              )}
 
               {/* Form fields — only show after mission started */}
               {missionStarted && !completed && (
