@@ -18,6 +18,7 @@ import Superiores from "@/pages/Superiores";
 import Missoes from "@/pages/Missoes";
 import MissionLogs from "@/pages/MissionLogs";
 import Detidos from "@/pages/Detidos";
+import DetidosLogs from "@/pages/DetidosLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,13 @@ function AppRoutes() {
       <Route path="/detidos" element={
         <ProtectedRoute>
           <Layout><Detidos /></Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Logs de Detidos — só superiores */}
+      <Route path="/detidos-logs" element={
+        <ProtectedRoute requireSuperior>
+          <Layout><DetidosLogs /></Layout>
         </ProtectedRoute>
       } />
 
