@@ -321,7 +321,7 @@ export default function Missoes() {
                     boxShadow: `0 0 25px ${diffConfig.color}40`,
                   }}>
                   <Clock size={20} />
-                  Iniciar Missão (30 min)
+                  Iniciar Missão (10 min)
                 </button>
               )}
 
