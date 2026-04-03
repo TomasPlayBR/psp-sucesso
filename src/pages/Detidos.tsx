@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import {
-  collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp
+  collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
 } from "firebase/firestore";
 import {
-  Lock, Unlock, Plus, Clock, User, Gavel, AlertTriangle, Package,
-  Scale, FileText, X, ChevronDown, ChevronUp, Volume2, VolumeX, Shield
+  Lock, Unlock, Plus, User, Gavel, AlertTriangle, Package,
+  Scale, FileText, ChevronDown, ChevronUp, Shield
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,6 @@ interface Detido {
   id: string;
   nome: string;
   crime: string;
-  duracao: number; // minutes
-  fimTimestamp: number; // epoch ms
   responsavel: string;
   cargoResponsavel: string;
   artigos: string;
@@ -49,55 +47,15 @@ const CRIMES = [
   "Outro",
 ];
 
-const DURACOES = [
-  { label: "5 minutos", value: 5 },
-  { label: "10 minutos", value: 10 },
-  { label: "15 minutos", value: 15 },
-  { label: "20 minutos", value: 20 },
-  { label: "25 minutos", value: 25 },
-  { label: "30 minutos", value: 30 },
-  { label: "35 minutos", value: 35 },
-  { label: "40 minutos", value: 40 },
-  { label: "45 minutos", value: 45 },
-  { label: "50 minutos", value: 50 },
-  { label: "55 minutos", value: 55 },
-  { label: "60 minutos", value: 60 },
-];
-
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return "00:00";
-  const totalSec = Math.floor(ms / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
-function getTimerState(remaining: number): "normal" | "warning" | "expired" {
-  if (remaining <= 0) return "expired";
-  if (remaining <= 2 * 60 * 1000) return "warning";
-  return "normal";
-}
-
-const TIMER_COLORS = {
-  normal: { color: "hsl(var(--success))", bg: "hsl(var(--success) / 0.1)", border: "hsl(var(--success) / 0.3)" },
-  warning: { color: "hsl(43 90% 52%)", bg: "hsl(43 90% 52% / 0.1)", border: "hsl(43 90% 52% / 0.3)" },
-  expired: { color: "hsl(var(--destructive))", bg: "hsl(var(--destructive) / 0.15)", border: "hsl(var(--destructive) / 0.4)" },
-};
-
 export default function Detidos() {
   const { currentUser, registrarLog } = useAuth();
   const [detidos, setDetidos] = useState<Detido[]>([]);
-  const [now, setNow] = useState(Date.now());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const alertedRef = useRef<Set<string>>(new Set());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Form
   const [fNome, setFNome] = useState("");
   const [fCrimes, setFCrimes] = useState<string[]>([]);
-  const [fDuracao, setFDuracao] = useState(30);
   const [fArtigos, setFArtigos] = useState("");
   const [fObjetos, setFObjetos] = useState("");
   const [fAdvogado, setFAdvogado] = useState<"sim" | "nao" | "solicitado">("nao");
@@ -106,7 +64,7 @@ export default function Detidos() {
 
   // Real-time listener
   useEffect(() => {
-    const q = query(collection(db, "detidos"), orderBy("fimTimestamp", "asc"));
+    const q = query(collection(db, "detidos"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       setDetidos(snap.docs.map(d => {
         const data = d.data();
@@ -114,8 +72,6 @@ export default function Detidos() {
           id: d.id,
           nome: data.nome || "",
           crime: data.crime || "",
-          duracao: data.duracao || 30,
-          fimTimestamp: data.fimTimestamp || 0,
           responsavel: data.responsavel || "",
           cargoResponsavel: data.cargoResponsavel || "",
           artigos: data.artigos || "",
@@ -130,54 +86,20 @@ export default function Detidos() {
     return () => unsub();
   }, []);
 
-  // Tick every second
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Sound alert for expired
-  useEffect(() => {
-    if (!soundEnabled) return;
-    detidos.forEach(d => {
-      const remaining = d.fimTimestamp - now;
-      if (remaining <= 0 && !alertedRef.current.has(d.id)) {
-        alertedRef.current.add(d.id);
-        try {
-          // Use Web Audio API for a beep
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 880;
-          osc.type = "square";
-          gain.gain.value = 0.15;
-          osc.start();
-          setTimeout(() => { osc.stop(); ctx.close(); }, 400);
-        } catch {}
-      }
-    });
-  }, [now, detidos, soundEnabled]);
-
   const resetForm = () => {
-    setFNome(""); setFCrimes([]); setFDuracao(30);
+    setFNome(""); setFCrimes([]);
     setFArtigos(""); setFObjetos(""); setFAdvogado("nao");
-    setFFianca(""); setFNotas("");
+    setFNotas("");
   };
 
   const handleSubmit = async () => {
     if (!fNome.trim() || fCrimes.length === 0 || !currentUser) return;
     setSubmitting(true);
     try {
-      const agora = Date.now();
-      const fim = agora + fDuracao * 60 * 1000;
       const now = new Date();
       await addDoc(collection(db, "detidos"), {
         nome: fNome.trim(),
         crime: fCrimes.join(", "),
-        duracao: fDuracao,
-        fimTimestamp: fim,
         responsavel: currentUser.username,
         cargoResponsavel: currentUser.role,
         artigos: fArtigos.trim(),
@@ -188,7 +110,7 @@ export default function Detidos() {
         horaEntrada: now.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }),
         timestamp: serverTimestamp(),
       });
-      await registrarLog(`Registou detido: ${fNome.trim()} — ${fCrimes.join(", ")} (${fDuracao}min)`);
+      await registrarLog(`Registou detido: ${fNome.trim()} — ${fCrimes.join(", ")}`);
       resetForm();
       setDialogOpen(false);
     } catch (e) {
@@ -202,14 +124,10 @@ export default function Detidos() {
     try {
       await deleteDoc(doc(db, "detidos", d.id));
       await registrarLog(`Libertou detido: ${d.nome} — ${d.crime}`);
-      alertedRef.current.delete(d.id);
     } catch (e) {
       console.error(e);
     }
   };
-
-  const activeCount = detidos.filter(d => d.fimTimestamp - now > 0).length;
-  const expiredCount = detidos.filter(d => d.fimTimestamp - now <= 0).length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -229,33 +147,12 @@ export default function Detidos() {
                 Gestão de Detidos
               </h1>
               <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-                Painel de controlo de custódia em tempo real
+                Registo e controlo manual de custódia
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Stats */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: "hsl(var(--success) / 0.1)", color: "hsl(var(--success))", border: "1px solid hsl(var(--success) / 0.3)" }}>
-                {activeCount} Ativo{activeCount !== 1 ? "s" : ""}
-              </span>
-              {expiredCount > 0 && (
-                <span className="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg font-bold animate-pulse"
-                  style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))", border: "1px solid hsl(var(--destructive) / 0.4)" }}>
-                  {expiredCount} Para Libertar
-                </span>
-              )}
-            </div>
-
-            {/* Sound toggle */}
-            <button onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 rounded-lg transition-colors"
-              style={{ background: "hsl(var(--secondary))", color: soundEnabled ? "hsl(var(--gold))" : "hsl(var(--muted-foreground))" }}>
-              {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            </button>
-
             {/* Add detido */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -309,20 +206,6 @@ export default function Detidos() {
                         );
                       })}
                     </div>
-                  </div>
-
-                  {/* Duração */}
-                  <div>
-                    <label className="text-[10px] uppercase tracking-widest font-semibold mb-1 block"
-                      style={{ color: "hsl(var(--muted-foreground))" }}>Tempo de Detenção *</label>
-                    <Select value={String(fDuracao)} onValueChange={v => setFDuracao(Number(v))}>
-                      <SelectTrigger className="psp-input">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DURACOES.map(d => <SelectItem key={d.value} value={String(d.value)}>{d.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   <div className="border-t pt-4" style={{ borderColor: "hsl(var(--border))" }}>
@@ -394,46 +277,33 @@ export default function Detidos() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {detidos.map((d, i) => {
-            const remaining = d.fimTimestamp - now;
-            const state = getTimerState(remaining);
-            const tc = TIMER_COLORS[state];
             const isExpanded = expandedId === d.id;
-            const progress = Math.max(0, Math.min(100, (remaining / (d.duracao * 60 * 1000)) * 100));
 
             return (
               <div key={d.id}
-                className={`psp-card overflow-hidden transition-all duration-300 ${state === "expired" ? "animate-pulse" : ""}`}
+                className="psp-card overflow-hidden transition-all duration-300"
                 style={{
-                  borderColor: tc.border,
-                  boxShadow: state === "expired" ? `0 0 25px hsl(var(--destructive) / 0.2), inset 0 0 20px hsl(var(--destructive) / 0.05)` : undefined,
+                  borderColor: "hsl(var(--border))",
                 }}>
                 {/* Cell header */}
                 <div className="px-4 py-2 flex items-center justify-between"
-                  style={{ background: tc.bg, borderBottom: `1px solid ${tc.border}` }}>
+                  style={{ background: "hsl(var(--secondary) / 0.5)", borderBottom: "1px solid hsl(var(--border))" }}>
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em]"
-                    style={{ color: tc.color }}>
+                    style={{ color: "hsl(var(--gold))" }}>
                     Cela {String(i + 1).padStart(2, "0")}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Clock size={12} style={{ color: tc.color }} />
-                    <span className="text-sm font-mono font-bold" style={{ color: tc.color }}>
-                      {formatCountdown(remaining)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full h-1" style={{ background: "hsl(var(--secondary))" }}>
-                  <div className="h-full transition-all duration-1000"
-                    style={{ width: `${progress}%`, background: tc.color }} />
+                  <span className="text-[10px] uppercase tracking-widest"
+                    style={{ color: "hsl(var(--muted-foreground))" }}>
+                    Entrada {d.horaEntrada}
+                  </span>
                 </div>
 
                 {/* Body */}
                 <div className="p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: tc.bg, border: `1px solid ${tc.border}` }}>
-                      <User size={18} style={{ color: tc.color }} />
+                      style={{ background: "hsl(var(--gold) / 0.1)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                      <User size={18} style={{ color: "hsl(var(--gold))" }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-bold truncate"
@@ -499,15 +369,6 @@ export default function Detidos() {
                           </span>
                         </div>
                       </div>
-                      {d.fianca && (
-                        <div className="flex gap-2">
-                          <FileText size={12} className="shrink-0 mt-0.5" style={{ color: "hsl(var(--gold))" }} />
-                          <div>
-                            <span className="text-[9px] uppercase tracking-widest font-bold block" style={{ color: "hsl(var(--gold) / 0.7)" }}>Fiança</span>
-                            <span style={{ color: "hsl(var(--foreground))" }}>{d.fianca}</span>
-                          </div>
-                        </div>
-                      )}
                       {d.notas && (
                         <div className="flex gap-2">
                           <AlertTriangle size={12} className="shrink-0 mt-0.5" style={{ color: "hsl(var(--gold))" }} />
@@ -521,19 +382,17 @@ export default function Detidos() {
                   )}
 
                   {/* Release button */}
-                  {state === "expired" && (
-                    <button onClick={() => handleRelease(d)}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
-                      style={{
-                        background: "linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--destructive) / 0.8))",
-                        color: "white",
-                        fontFamily: "Rajdhani, sans-serif",
-                        boxShadow: "0 0 20px hsl(var(--destructive) / 0.3)",
-                      }}>
-                      <Unlock size={14} />
-                      Libertar Detido
-                    </button>
-                  )}
+                  <button onClick={() => handleRelease(d)}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+                    style={{
+                      background: "linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--destructive) / 0.8))",
+                      color: "white",
+                      fontFamily: "Rajdhani, sans-serif",
+                      boxShadow: "0 0 20px hsl(var(--destructive) / 0.3)",
+                    }}>
+                    <Unlock size={14} />
+                    Libertar Detido
+                  </button>
                 </div>
               </div>
             );
